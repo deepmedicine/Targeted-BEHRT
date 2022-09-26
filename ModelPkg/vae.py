@@ -63,14 +63,11 @@ class VAE(Bert.modeling.BertPreTrainedModel):
         """
         result = self.activ(self.decoder1(z))
         result = self.activ(self.decoder2(result))
-        # print('decoding step....', result)
         outs = []
 
-        # for outputiter, output in enumerate(self.linearOut):
 
         for outputiter , linoutnetwork in enumerate(self.linearOut):
             resout = self.logSoftmax(linoutnetwork(result))
-            # print(outputiter, resout)
             outs.append(resout)
 
         outs = torch.cat((outs), dim=1)
@@ -109,7 +106,6 @@ class VAE(Bert.modeling.BertPreTrainedModel):
         recons = dictout[0].transpose(1,0)
         input = dictout[1].transpose(1,0)
 
-        # print(recons.shape, input.shape)
         mu = dictout[2]
         log_var = dictout[3]
         if self.BetaD==False:
@@ -121,18 +117,13 @@ class VAE(Bert.modeling.BertPreTrainedModel):
             outs = []
             labs = []
             for outputiter , output in enumerate(self.unsuplist):
-                # print(outputiter,output )
                 elementssize = output[0]
                 chunkrecons = recons[startindx:startindx+elementssize].transpose(1,0)
                 labels= input[outputiter]
-                # print(chunkrecons.shape, labels.shape)
                 lossF  = nn.NLLLoss(reduction='none', ignore_index=-1)
                 temploss = lossF(chunkrecons,labels).sum()
                 reconsloss =reconsloss+ temploss
-                # print(outputiter)
-                # print(recons[startindx:startindx+elementssize].transpose(1,0)[:10])
-                # print(labels[:10])
-                # print(temploss)
+
                 outs.append(chunkrecons)
                 labs.append(labels)
                 startindx = startindx+elementssize
@@ -141,7 +132,6 @@ class VAE(Bert.modeling.BertPreTrainedModel):
             kld_loss = torch.sum(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim = 1), dim = 0)
 
             loss = (reconsloss + kld_weight * kld_loss)/len(dictout[0])
-            # print({'loss': loss, 'Reconstruction_Loss':reconsloss, 'KLD':-kld_loss})
 
             if self.config.klpar<1:
                 self.config.klpar = self.config.klpar + 1e-5

@@ -138,7 +138,7 @@ class BertLastPooler(nn.Module):
 
     def forward(self, hidden_states):
         # We "pool" the model by simply taking the hidden state corresponding
-        # to the first token.
+        # to the last token. this is unlike first token pooling, just switched the ordering of the data
         first_token_tensor = hidden_states[:, -1]
         pooled_output = self.dense(first_token_tensor)
         pooled_output = self.activation(pooled_output)
@@ -366,8 +366,6 @@ class TARNET_MEM(Bert.modeling.BertPreTrainedModel):
         outcomeT = outcomeT.to(self.otherDevice)
         outputVAE = self.VAE(pooled_outVAE, vaelabel)
 
-        # outputVAE = self.VAE(embed4MLM[:,0], vaelabel)
-        # print(outputVAE)
         masked_lm_loss = torch.tensor([0.0]).to(self.otherDevice)
 
         if self.MLM==True:
@@ -466,7 +464,6 @@ class SimpleBEHRT(Bert.modeling.BertPreTrainedModel):
 
         pooled_out = self.pooler(embedding_outputLSTM)
         pooled_out = self.dropout(pooled_out)
-        # print(embedding_outputLSTM.shape)
         return embedding_outputLSTM, pooled_out
 
 class BEHRTBASE(Bert.modeling.BertPreTrainedModel):
@@ -476,8 +473,6 @@ class BEHRTBASE(Bert.modeling.BertPreTrainedModel):
         self.embeddings = BertEmbeddingsUnsup(config=config)
 
         self.encoder = Bert.modeling.BertEncoder(config=config)
-        # self.apply(self.init_bert_weights)
-        print('rnn  pool + behrt chassis version')
         self.config = config
 
         self.apply(self.init_bert_weights)
@@ -581,22 +576,17 @@ class DRAGONNET(Bert.modeling.BertPreTrainedModel):
     def forward(self, input_ids, age_ids=None, seg_ids=None, posi_ids=None, year_ids = None,  attention_mask=None, masked_lm_labels=None,
                 outcomeT=None, treatmentCLabel=None, fullEval=False, vaelabel = None):
         batchs = input_ids.shape[0]
-        seqlen = input_ids.shape[1]
         embed4MLM, pooled_out = self.bert(input_ids, age_ids, seg_ids, posi_ids , year_ids,  attention_mask,
                                                 output_all_encoded_layers=False, fullmask = None)
-        # print(treatmentCLabel)
 
         treatmentCLabel = treatmentCLabel.to(self.otherDevice)
         #
         pooled_outVAE = self.VAEpooler(embed4MLM)
         pooled_outVAE = self.dropoutVAE(pooled_outVAE)
-        # # print(treatmentCLabel)
 
         outcomeT = outcomeT.to(self.otherDevice)
         outputVAE = self.VAE(pooled_outVAE, vaelabel)
 
-        # outputVAE = self.VAE(embed4MLM[:,0], vaelabel)
-        # print(outputVAE)
         if self.MLM==True:
             prediction_scores = self.cls(embed4MLM[:,1:])
 
