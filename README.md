@@ -1,5 +1,6 @@
 # Targeted BEHRT
-Repository for paper: Targeted-BEHRT: Deep Learning for Observational Causal Inference on Longitudinal Electronic Health Records<br/> 
+Repository for publication: Targeted-BEHRT: Deep Learning for Observational Causal Inference on Longitudinal Electronic Health Records<br/>
+IEEE Transactions on Neural Networks and Learning Systems; Special Issue on Causality<br/>
 https://ieeexplore.ieee.org/document/9804397/<br/>
 DOI: 10.1109/TNNLS.2022.3183864.<br/>
 
