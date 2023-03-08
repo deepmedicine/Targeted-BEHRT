@@ -1,27 +1,25 @@
 from torch.utils.data.dataset import Dataset
 import torch
-from utils import *
+from src.utils import *
 # data for var autoencoder deep unsup learning with tbehrt
 
 
 class TBEHRT_data_formation(Dataset):
-    def __init__(self, token2idx, dataframe, max_len, max_age=110, yvocab=None, age_symbol=None, TestFlag=None,
-                 noMEM=True, year=False, expColumn=None, outcomeColumn=None, list2avoid=None):
+    def __init__(self, token2idx, dataframe, code= 'code', age = 'age', year = 'year' , static= 'static' , max_len=1000,expColumn='explabel', outcomeColumn='label',  max_age=110, yvocab=None, list2avoid=None, MEM=True):
         """
             The dataset class for the pytorch coded model, Targeted BEHRT
 
             token2idx - the dict that maps tokens in EHR to numbers /index
             dataframe - the pandas dataframe that has the code,age,year, and any static columns
+            code - name of code column
+            age - name of age column
+            year - name of year column
+            static - name of static column
             max_len - length of sequence
-            max_age - important for agebased sequential variables
             yvocab - the year vocab for the year based sequence of variables
-            age_symbol - the symbol for the other characters for age
-            TestFlag - the mode for testing/evaluation
-            binaryF - unnecessary for this version of the data formation
-            noMEM - flag to turn on/off masking for input data variables (crucial for unsupervised learning)
-            year - flag to turn on/off the year based definition of age. also could be in months. change input dataframe age column appropriately
             expColumn - the exposure column for dataframe
             outcomeColumn - the outcome column
+            MEM - the masked EHR modelling flag for unsupervised learning
             list2avoid - list of tokens /diseases to not include in the MEM masking procedure
 
               """
@@ -33,24 +31,22 @@ class TBEHRT_data_formation(Dataset):
             print("old Vocab size: ", len(token2idx), ", and new Vocab size: ", len(self.acceptableVoc))
         self.vocab = token2idx
         self.max_len = max_len
-        self.code = dataframe.code
-        self.age = dataframe.age
-        self.year = dataframe.year
+        self.code = dataframe[code]
+        self.age = dataframe[age]
+        self.year = dataframe[year]
         if outcomeColumn is None:
             self.label = dataframe.deathLabel
         else:
             self.label = dataframe[outcomeColumn]
-        self.age2idx, _ = age_vocab(max_age, year, symbol=age_symbol)
+        self.age2idx, _ = age_vocab(110, year, symbol=None)
 
         if expColumn is None:
             self.treatmentLabel = dataframe.diseaseLabel
         else:
             self.treatmentLabel = dataframe[expColumn]
-        self.TestFlag = TestFlag
-        self.noMEM = noMEM
         self.year2idx = yvocab
-        self.codeS = dataframe.comorb
-
+        self.codeS = dataframe[static]
+        self.MEM = MEM
     def __getitem__(self, index):
         """
         return: age, code, position, segmentation, mask, label
@@ -73,7 +69,7 @@ class TBEHRT_data_formation(Dataset):
         # avoid data cut with first element to be 'SEP'
         labelOutcome = self.label[index]
 
-
+        
         # moved CLS to end as opposed to beginning.
         code[-1] = 'CLS'
 
@@ -88,7 +84,7 @@ class TBEHRT_data_formation(Dataset):
 
         age = seq_padding_reverse(age, self.max_len, token2idx=self.age2idx)
 
-        if self.noMEM == True:
+        if self.MEM == False:
             tokens, codeMLM, labelMLM = nonMASK(code, self.vocab)
         else:
             tokens, codeMLM, labelMLM = randommaskreal(code, self.acceptableVoc)
@@ -106,7 +102,7 @@ class TBEHRT_data_formation(Dataset):
         outCodeS = [int(xx) for xx in self.codeS[index]]
         fixedcovar = np.array(outCodeS )
         labelcovar = np.array(([-1] * len(outCodeS)) + [-1, -1])
-        if self.noMEM == False:
+        if self.MEM == True:
             fixedcovar, labelcovar = covarUnsupMaker(fixedcovar)
         code2 = np.append(fixedcovar, code2)
         codeMLM = np.append(fixedcovar, codeMLM)
@@ -117,9 +113,9 @@ class TBEHRT_data_formation(Dataset):
         return torch.LongTensor(age), torch.LongTensor(code2), torch.LongTensor(codeMLM), torch.LongTensor(
             position), torch.LongTensor(segment), torch.LongTensor(year), \
                torch.LongTensor(mask), torch.LongTensor(labelMLM), torch.LongTensor(
-            [labelOutcome]), treatmentOutcome, torch.LongTensor([0]), torch.LongTensor([0]), torch.LongTensor(
-            [0]), torch.LongTensor(labelcovar)
+            [labelOutcome]), treatmentOutcome,  torch.LongTensor(labelcovar)
 
+    
     def __len__(self):
         return len(self.code)
 

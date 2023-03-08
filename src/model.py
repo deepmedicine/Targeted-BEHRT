@@ -7,7 +7,7 @@ import numpy as np
 import copy
 import torch.nn.functional as F
 import math
-from vae import *
+from src.vae import *
 
 
 
@@ -35,10 +35,10 @@ class BertConfig(Bert.modeling.BertConfig):
 
         if config.get('poolingSize') is not None:
             self.poolingSize = config.get('poolingSize')
-        if config.get('MLM') is not None:
-            self.MLM = config.get('MLM')
+        if config.get('MEM') is not None:
+            self.MEM = config.get('MEM')
         else:
-            self.MLM=False
+            self.MEM=False
         if config.get('unsupSize') is not None:
             self.unsupSize = config.get('unsupSize')
         if config.get('unsupVAE') is not None:
@@ -203,19 +203,16 @@ class TBEHRT(Bert.modeling.BertPreTrainedModel):
         self.num_treatment = config.num_treatment
         self.logS = nn.LogSoftmax()
 
-
-        self.Eps.to(self.otherDevice)
-
         self.VAEpooler = BertVAEPooler(config)
         self.VAEpooler.to(self.otherDevice)
         self.VAE = VAE(config)
         self.VAE.to(self.otherDevice)
         self.treatmentW = 1.0
-        self.MLM = False
+        self.MEM = False
         self.config = config
-        if config.MLM is True:
-            self.MLM = True
-            print('turning on the MLM....')
+        if config.MEM is True:
+            self.MEM = True
+            print('turning on the MEM....')
             self.cls = Bert.modeling.BertOnlyMLMHead(config, self.bert.bert.embeddings.word_embeddings.weight)
             self.cls.to(self.otherDevice)
         self.apply(self.init_bert_weights)
@@ -234,7 +231,7 @@ class TBEHRT(Bert.modeling.BertPreTrainedModel):
         outcomeT = outcomeT.to(self.otherDevice)
         outputVAE = self.VAE(pooled_outVAE, vaelabel)
 
-        if self.MLM==True:
+        if self.MEM==True:
             prediction_scores = self.cls(embed4MLM[:,1:])
 
             if masked_lm_labels is not None:
@@ -333,7 +330,6 @@ class TARNET_MEM(Bert.modeling.BertPreTrainedModel):
         self.logS = nn.LogSoftmax()
 
 
-        self.Eps.to(self.otherDevice)
 
 
 
@@ -342,11 +338,11 @@ class TARNET_MEM(Bert.modeling.BertPreTrainedModel):
         self.VAE = VAE(config)
         self.VAE.to(self.otherDevice)
         self.treatmentW = 1.0
-        self.MLM = False
+        self.MEM = False
         self.config = config
-        if config.MLM is True:
-            self.MLM = True
-            print('turning on the MLM....')
+        if config.MEM is True:
+            self.MEM = True
+            print('turning on the MEM....')
             self.cls = Bert.modeling.BertOnlyMLMHead(config, self.bert.bert.embeddings.word_embeddings.weight)
             self.cls.to(self.otherDevice)
         self.apply(self.init_bert_weights)
@@ -368,7 +364,7 @@ class TARNET_MEM(Bert.modeling.BertPreTrainedModel):
 
         masked_lm_loss = torch.tensor([0.0]).to(self.otherDevice)
 
-        if self.MLM==True:
+        if self.MEM==True:
             prediction_scores = self.cls(embed4MLM[:,1:])
 
             if masked_lm_labels is not None:
@@ -563,11 +559,11 @@ class DRAGONNET(Bert.modeling.BertPreTrainedModel):
         self.VAE = VAE(config)
         self.VAE.to(self.otherDevice)
         self.treatmentW = 1.0
-        self.MLM = False
+        self.MEM = False
         self.config = config
-        if config.MLM is True:
-            self.MLM = True
-            print('turning on the MLM....')
+        if config.MEM is True:
+            self.MEM = True
+            print('turning on the MEM....')
             self.cls = Bert.modeling.BertOnlyMLMHead(config, self.bert.bert.embeddings.word_embeddings.weight)
             self.cls.to(self.otherDevice)
         self.apply(self.init_bert_weights)
@@ -587,8 +583,8 @@ class DRAGONNET(Bert.modeling.BertPreTrainedModel):
         outcomeT = outcomeT.to(self.otherDevice)
         outputVAE = self.VAE(pooled_outVAE, vaelabel)
 
-        if self.MLM==True:
-            prediction_scores = self.cls(embed4MLM[:,1:])
+        if self.MEM==True:
+            prediction_scores = self.cls(embed4MEM[:,1:])
 
             if masked_lm_labels is not None:
                 loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
