@@ -10,16 +10,7 @@ from .modeling import (BertConfig, BertModel, BertForPreTraining,
                        BertForTokenClassification, BertForQuestionAnswering,
                        load_tf_weights_in_bert)
 
-from .modelingSpectralNorm import (BertConfig, BertModel, BertForPreTraining,
-                       BertForMaskedLM, BertForNextSentencePrediction,
-                       BertForSequenceClassification, BertForMultipleChoice,
-                       BertForTokenClassification, BertForQuestionAnswering,
-                       load_tf_weights_in_bert)
-from .modeling2 import (BertConfig, BertModel, BertForPreTraining,
-                       BertForMaskedLM, BertForNextSentencePrediction,
-                       BertForSequenceClassification, BertForMultipleChoice,
-                       BertForTokenClassification, BertForQuestionAnswering,
-                       load_tf_weights_in_bert)
+
 from .modeling_openai import (OpenAIGPTConfig, OpenAIGPTModel,
                               OpenAIGPTLMHeadModel, OpenAIGPTDoubleHeadsModel,
                               load_tf_weights_in_openai_gpt)

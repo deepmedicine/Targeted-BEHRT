@@ -1,4 +1,4 @@
-import ExpHypCancer.pytorch_pretrained_bert as Bert
+import pytorch_pretrained_bert as Bert
 
 def VAEadam(params, config=None):
     if config is None:

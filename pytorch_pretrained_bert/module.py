@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import ExpHypCancer.pytorch_pretrained_bert as Bert
+import pytorch_pretrained_bert as Bert
 
 
 def sequence_mask(sequence_length, max_len=None, device=None):
